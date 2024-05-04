@@ -22,28 +22,44 @@ namespace Microsoft.AspNetCore.Builder
             return app;
         }
 
-        private static async Task<IResult> GetDishById(IDishService dishService,
+        // Always specify the expected return types
+        private static async Task<Results<NotFound, Ok<DishesAPI.Entities.Dish?>>> GetDishById
+        (IDishService dishService,
             Guid dishId)
         {
-            var dish = await dishService.GetDishById(dishId);
+            DishesAPI.Entities.Dish? dish = await dishService.GetDishById(dishId);
 
             if (dish is null)
             {
-                return Results.NotFound();
+                return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok(dish);
+            return TypedResults.Ok(dish)!;
         }
 
-        private static async Task<List<DishesAPI.Entities.Dish>> GetDishesByOptionalQuery(IDishService dishService,
+        private static async Task<Results<NotFound, Ok<List<DishesAPI.Entities.Dish>> >> GetDishesByOptionalQuery(IDishService dishService,
             [FromQuery] string? name) // type string is automatically inferred from the query string, so the [FromQuery] is optional
         {
-            return string.IsNullOrWhiteSpace(name)? await dishService.GetDishes() :await dishService.GetDishesByName(name);
+            var dishes = string.IsNullOrWhiteSpace(name)?  await dishService.GetDishes() :await dishService.GetDishesByName(name);
+
+            if (!dishes.Any())
+            {
+              return  TypedResults.NotFound();
+            }
+
+            return TypedResults.Ok(dishes);
         }
 
-        private static async Task<List<DishesAPI.Entities.Dish>> GetDishes(IDishService  dishService)
+        private static async Task<Results<NotFound, Ok<List<DishesAPI.Entities.Dish>> >> GetDishes(IDishService  dishService)
         {
-            return await dishService.GetDishes();
+            var dishes = await dishService.GetDishes();
+            
+            if (!dishes.Any())
+            {
+                return  TypedResults.NotFound();
+            }
+
+            return TypedResults.Ok(dishes);
         }
     }
 }
