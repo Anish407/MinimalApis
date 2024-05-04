@@ -1,4 +1,7 @@
-﻿using Dish.Core.Handlers;
+﻿using System.Net;
+using Dish.Core.DTOs;
+using Dish.Core.Exceptions;
+using Dish.Core.Handlers;
 using DishesAPI.DbContexts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -18,8 +21,26 @@ namespace Microsoft.AspNetCore.Builder
             group.MapGet("/", GetDishes);
             group.MapGet("/Dishes", GetDishesByOptionalQuery);
             group.MapGet("/Dishes/{dishId:guid}", GetDishById);
+            group.MapPost("/Dish", CreateDish);
+            
 
             return app;
+        }
+
+        private static async Task<Results<Created, BadRequest<string>,StatusCodeHttpResult>> CreateDish(IDishService dishService, CreateDishDTO dishDto)
+        {
+            try
+            {
+                await dishService.Create(dishDto);
+                return TypedResults.Created();
+            }
+            catch (DatabaseException e)
+            {
+                return TypedResults.BadRequest(e.Message);
+            } catch (Exception e)
+            {
+                return TypedResults.StatusCode(500);
+            }
         }
 
         // Always specify the expected return types
