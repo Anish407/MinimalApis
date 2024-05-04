@@ -1,6 +1,7 @@
 ﻿using Dish.Core.Handlers;
 using DishesAPI.DbContexts;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -21,14 +22,21 @@ namespace Microsoft.AspNetCore.Builder
             return app;
         }
 
-        private static async Task<DishesAPI.Entities.Dish> GetDishById(IDishService dishService,
+        private static async Task<IResult> GetDishById(IDishService dishService,
             Guid dishId)
         {
-            return await dishService.GetDishById(dishId);
+            var dish = await dishService.GetDishById(dishId);
+
+            if (dish is null)
+            {
+                return Results.NotFound();
+            }
+
+            return TypedResults.Ok(dish);
         }
 
         private static async Task<List<DishesAPI.Entities.Dish>> GetDishesByOptionalQuery(IDishService dishService,
-            [FromQuery] string? name)
+            [FromQuery] string? name) // type string is automatically inferred from the query string, so the [FromQuery] is optional
         {
             return string.IsNullOrWhiteSpace(name)? await dishService.GetDishes() :await dishService.GetDishesByName(name);
         }
