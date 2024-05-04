@@ -15,24 +15,32 @@ namespace Microsoft.AspNetCore.Builder
 {
     public static class DishEndpoints
     {
+        private const string GetDishByIdEndpointName = "GetDish";
         public static IEndpointRouteBuilder UseDishEndpoints(this IEndpointRouteBuilder app)
         {
             var group = app.MapGroup("/api");
             group.MapGet("/", GetDishes);
             group.MapGet("/Dishes", GetDishesByOptionalQuery);
-            group.MapGet("/Dishes/{dishId:guid}", GetDishById);
+            group.MapGet("/Dishes/{dishId:guid}", GetDishById).WithName(GetDishByIdEndpointName);
             group.MapPost("/Dish", CreateDish);
             
 
             return app;
         }
 
-        private static async Task<Results<Created, BadRequest<string>,StatusCodeHttpResult>> CreateDish(IDishService dishService, CreateDishDTO dishDto)
+        private static async Task<Results<Created, BadRequest<string>,StatusCodeHttpResult>> CreateDish
+            (IDishService dishService, 
+                CreateDishDTO dishDto,
+                LinkGenerator linkGenerator,
+                HttpContext context)
         {
             try
             {
-                await dishService.Create(dishDto);
-                return TypedResults.Created();
+                var createdDish = await dishService.Create(dishDto);
+                var link= linkGenerator.GetUriByName(context, 
+                    GetDishByIdEndpointName,
+                    new { dishId= createdDish.Id });
+                return TypedResults.Created(link);
             }
             catch (DatabaseException e)
             {
