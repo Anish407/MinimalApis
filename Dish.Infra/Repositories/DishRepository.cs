@@ -1,11 +1,11 @@
 ﻿using Dish.Core.Repositories;
-using Microsoft.EntityFrameworkCore;
+using DishesAPI.DbContexts;
 
 namespace Dish.Infra.Repositories;
 
 public class DishRepository: BaseRepository<DishesAPI.Entities.Dish>,IDishRepository
 {
-    public DishRepository(DbContext context) : base(context)
+    public DishRepository(DishesDbContext context) : base(context)
     {
     }
 }
